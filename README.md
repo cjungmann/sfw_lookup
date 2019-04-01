@@ -15,9 +15,9 @@ The framework provides several ways to populate a **select** element,
 3. Use a **merged** document that includes the lookup data.  The
    create and update transaction data are merged with with the origin
    document to access the lookup data.
-4. Name a table and field name after an **enum** instruction in a
-   field branch.  In this example, an definition enum will be
-   synthesized from the *name* field of the *Company* table:
+4. Use the *enum* field of the target table for a procedure parameter's
+   data type to ensure the field's allowed options match what the
+   table will accept.
 
    ~~~
    add
