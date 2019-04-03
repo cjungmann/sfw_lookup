@@ -1,0 +1,251 @@
+#!/usr/bin/env bash
+
+DBase=SFW_Lookup
+
+declare -a XmlIndex=()
+
+is_root() { [ "$user" == "root" ]; }
+
+database_exists()
+{
+    local dbname="$1"
+    local -i count
+    local IFS=$'\n'
+    local -a aquery=(
+        "SELECT COUNT(*)"
+        "FROM information_schema.SCHEMATA"
+        "WHERE SCHEMA_NAME = '$dbname'"
+        )
+
+    IFS=" "
+    local query="${aquery[*]}"
+
+    IFS=$'\n'
+    local -a cmd=(
+        mysql
+        "$DBase"
+        -BN
+        -e
+        "$query"
+    )
+
+    count=$( "${cmd[@]}" )
+
+    [ "$count" -eq 1 ];
+}
+
+table_exists()
+{
+    local dbase="$1"
+    local table="$2"
+    local -i count
+    local IFS=$'\n'
+    local -a aquery=(
+        "SELECT COUNT(*)"
+        "FROM information_schema.TABLES"
+        "WHERE TABLE_SCHEMA = '$dbname'"
+        "AND TABLE_NAME = '$table'"
+        )
+
+    IFS=" "
+    local query="${aquery[*]}"
+
+    IFS=$'\n'
+    local -a cmd=(
+        mysql
+        "$DBase"
+        -BN
+        -e
+        "$query"
+    )
+
+    count=$( "${cmd[@]}" )
+
+    [ "$count" -eq 1 ];
+}
+
+create_database()
+{
+    if ! database_exists "$DBase"; then
+        echo "Creating database $DBase!" >&2
+        mysql -e "CREATE DATABASE $DBase"
+    else
+        echo "Database '$DBase' already exists." >&2
+    fi
+}
+
+install_framework()
+{
+    mysql -f "$DBase" < /usr/local/lib/SchemaServer/install/sys_procs.sql
+    cd site
+    ln -s /usr/local/lib/schemafw/web_includes includes
+    cp /usr/local/lib/schemafw/default.xsl .
+    cd ..
+}
+
+load_tables()
+{
+    cd setup_files
+    cp -f -s ../protected/tables* .
+    cd ..
+
+    local -a files=( $( ls setup_files | grep ^table - ) )
+    local file
+    for file in "${files[@]}"; do
+        echo "Loading sql table script '$file'"
+        mysql "$DBase" < "setup_files/$file"
+    done
+}
+
+load_procedures()
+{
+    local -a files=( $( ls setup_files | grep -v ^table - ) )
+    local file
+    for file in "${files[@]}"; do
+        echo "Loading sql procedures script '$file'"
+        mysql "$DBase" < "setup_files/$file"
+    done
+}
+
+create_source_procs()
+{
+    gensfw -d "$DBase" -t "Person" -c save
+}
+
+add_xml()
+{
+    local base="$1"
+    local summary="$2"
+    local info="$3"
+
+    local -a entry=(
+        "<entry name=\"$base\">"
+        "<summary>$summary</summary>"
+        "<info>$info</info>"
+        "</entry>"
+        )
+
+    XmlIndex+=( "${entry[@]}" )
+}
+
+write_index()
+{
+    local target="site/index.html"
+
+    local IFS=$' \n'
+    XmlIndex=(
+        "<?xml version=\"1.0\" ?>"
+        "<index>"
+        "${XmlIndex[@]}"
+        "</index>"
+    )
+
+    IFS=$'\n'
+    echo "${XmlIndex[*]}" > site/index.html
+}
+
+create_simplest_forms()
+{
+    local -i ref="$1"
+    local base="Person${ref}"
+
+    local -a summary="Simplest form, no lookups used."
+
+    local IFS=$'\n'
+
+    local -a ainfo=(
+        "This is the simplest form.  The gender, industry, and"
+        "state fields are unrestricted.  The user must guess what"
+        "options are available, no guidance is offered."
+        "<br />"
+        "This example is a bit contrived because it removed the"
+        "automatic usage of the table's enum column for the gender"
+        "parameter."
+    )
+
+    local info="${ainfo[*]}"
+
+    add_xml "$base" "$summary" "$info"
+
+
+    sed -e s/Person/"$base"/g Person.sql > "setup_files/${base}.sql"
+    sed -e s/Person/"$base"/g Person.srm > "site/${base}.srm"
+
+    IFS=$' \n'
+    local -a srmargs=(
+        delete add/schema/field:gender/enum --
+        delete edit/schema/field:gender/enum --
+        after-sibling list/title "info: ${info}" --
+        write_file "site/${base}.srm" --
+        )
+
+    gensfw_srm site/"$base.srm.temp" "${srmargs[@]}"
+}
+
+create_use_enum_parameters()
+{
+    local -i ref="$1"
+    local base="Person${ref}"
+
+    local -a summary="First variation: use enum datatype for procedure parameters."
+
+    local IFS=$'\n'
+
+    local -a ainfo=(
+        "First variation: use enum datatype for procedure parameters."
+    )
+
+    local info="${ainfo[*]}"
+
+    add_xml "$base" "$summary" "$info"
+
+    IFS=$'\n'
+    local -a seds=(
+        -e
+        s/Person/"$base"/g
+        )
+
+    sed "${seds[@]}" Person.srm > "site/${base}.srm"
+    # Rename procedures in sql and srm procedure references:
+    seds+=(
+        -e
+        s/gender\ VARCHAR.*,/gender\ ENUM\('male','female'\),/g
+    )
+
+    echo "SEDS is ${seds[*]}" >&2
+
+
+    sed "${seds[@]}" Person.sql > "setup_files/${base}.sql"
+
+    IFS=$' \n'
+    local -a srmargs=(
+        delete add/schema/field:gender/enum --
+        delete edit/schema/field:gender/enum --
+        after-sibling list/title "info: ${info}" --
+        write_file "site/${base}.srm" --
+        )
+
+    gensfw_srm site/"$base.srm" "${srmargs[@]}"
+}
+
+
+
+
+
+
+
+create_database
+install_framework
+load_tables
+create_source_procs
+
+load_procedures
+
+# declare -i ndx=0
+# create_simplest_forms      $(( ++ndx ))
+# create_use_enum_parameters $(( ++ndx ))
+
+
+./setup_apache
+
+

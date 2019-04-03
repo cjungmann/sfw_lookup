@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# in 'setup_apache' script
+SITE_NAME="sfw_lookup" # (required) .conf name and backup hostname
+
+SITE_INDEX="index.htm" # DirectoryIndex value in .conf file.  If
+                       # missing, DirectoryIndex will be set to the
+                       # first SRM file in 'site' directory.
+
+SITE_URL=               # ServerName value in .conf file.  If
+                        # missing, the ServerName will be set to
+                        # the value in the SITE_NAME variable above
+                        # AND the SITE_NAME will be added to the
+                        # /etc/hosts file to activate for localhost.
+          
+

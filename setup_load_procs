@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# The main function in this script is copied from ./setup
+# for convenience when it's necessary to just reload the
+# procedure scripts.
+
+load_procedures()
+{
+    local -a files=( $( ls setup_files | grep -v ^table - ) )
+    local file
+    for file in "${files[@]}"; do
+        echo "Loading sql procedures script '$file'"
+        mysql "$DBase" < "setup_files/$file"
+    done
+}
+
+load_procedures
+
+
