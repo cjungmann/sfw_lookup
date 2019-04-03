@@ -1,0 +1,131 @@
+$database       : SFW_Lookup
+$xml-stylesheet : default.xsl
+$default-mode   : list
+
+# The two changes here are in the "add" and "edit" response modes.
+# The "add" interaction must explicitly request the lookup data,
+# and the "edit" interaction will find the lookup data along with
+# the form data in the App_Person3_Value procedure.
+#
+# Both interactions will need to instruct the framework how to use
+# the lookup table.  In both the "add" and "edit" response modes,
+# the new instructions are in the "industry" field of the schema.
+
+list
+   type          : table
+   procedure     : App_Person3_List
+   title         : Person Management
+   subtitle      : Lookup Table Downloaded with Each Dialog
+   intro         : This version uses by-dialog lookups, where a lookup table \
+                   is downloaded every time a dialog is loaded.  This may seem \
+                   wasteful, but is appropriate when it is unlikely that a user \
+                   will need to add or update a record.  By defering the lookup \
+                   table until the rare time it's needed, it saves most users \
+                   the burden of loading a unnecessary table.
+   autoload_tag  : page
+   on_line_click : ?edit&id={!id}
+   button
+      type  : add
+      label : Create Person
+      task  : ?add
+   result : 1
+      schema
+         field : id
+            readOnly : true
+            hidden   : true
+         field : fname
+         field : lname
+         field : gender
+         field : industry
+         field : state
+   result : 2
+      type : variables
+
+add
+   type         : form-new
+   schema-proc  : App_Person3_Add
+   procedure    : App_Person3_Industry_Lookup
+   form-action  : ?add_submit
+   title        : Add Person
+   autoload_tag : dialog
+   schema
+      field : fname
+      field : lname
+      field : gender
+         enum : Person:gender
+      field : industry
+         # NEW INSTRUCTIONS:
+         ref
+            result : industries
+            label  : name
+      field : state
+   # NEW INSTRUCTIONS:
+   # Name the result so it can be found by the "ref" instruction in the schema
+   # Note that for the "add" interaction, there is no form data,
+   # so the lookup data will be in first result.
+   result
+      name : industries
+
+
+add_submit
+   type      : form-submit
+   procedure : App_Person3_Add
+   result : 1
+      type : update
+
+read
+   type      : form-view
+   procedure : App_Person3_Read
+   result : 1
+      schema
+         field : id
+            readOnly : true
+            hidden   : true
+         field : fname
+         field : lname
+         field : gender
+         field : industry
+         field : state
+
+edit
+   type         : form-edit
+   schema-proc  : App_Person3_Update
+   procedure    : App_Person3_Value
+   title        : Edit Person
+   form-action  : ?edit_submit
+   autoload_tag : dialog
+   schema
+      button
+         type    : delete
+         label   : Delete
+         confirm : Delete
+         task    : ?delete&id={@id}
+      field : id
+         readOnly : true
+         hidden   : true
+      field : fname
+      field : lname
+      field : gender
+         enum : Person:gender
+      field : industry
+         # NEW INSTRUCTIONS:
+         value : {@industry}
+         ref
+            result : industries
+            label  : name
+      field : state
+   # result : 1 is the form data.
+   # NEW INSTRUCTIONS:
+   # Name the result so it can be found by the "ref" instruction in the schema
+   result : 2
+      name : industries
+
+edit_submit
+   type      : form-submit
+   procedure : App_Person3_Update
+   result
+      type : update
+
+delete
+   type      : delete
+   procedure : App_Person3_Delete

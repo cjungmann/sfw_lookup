@@ -1,0 +1,95 @@
+$database       : SFW_Lookup
+$xml-stylesheet : default.xsl
+$default-mode   : list
+
+list
+   type          : table
+   procedure     : App_Person1_List
+   title         : Person1 Management
+   subtitle      : No Lookup Fields
+   intro         : First lookup variation: no lookup fields.  In particular, \
+                   notice the the gender field causes an error if the user enters \
+                   an unrecognized value.
+   autoload_tag  : page
+   on_line_click : ?edit&id={!id}
+   button
+      type  : add
+      label : Create Person1
+      task  : ?add
+   result : 1
+      schema
+         field : id
+            readOnly : true
+            hidden : true
+         field : fname
+         field : lname
+         field : gender
+         field : industry
+         field : state
+   result : 2
+      type : variables
+
+add
+   type         : form-new
+   schema-proc  : App_Person1_Add
+   form-action  : ?add_submit
+   title        : Add Person1
+   autoload_tag : dialog
+   schema
+      field : fname
+      field : lname
+      field : gender
+      field : industry
+      field : state
+
+add_submit
+   type      : form-submit
+   procedure : App_Person1_Add
+   result    : 1
+      type : update
+
+read
+   type      : form-view
+   procedure : App_Person1_Read
+   result    : 1
+      schema
+         field : id
+            readOnly : true
+            hidden : true
+         field : fname
+         field : lname
+         field : gender
+         field : industry
+         field : state
+
+edit
+   type         : form-edit
+   schema-proc  : App_Person1_Update
+   procedure    : App_Person1_Value
+   title        : Edit Person1
+   form-action  : ?edit_submit
+   autoload_tag : dialog
+   schema
+      button
+         type    : delete
+         label   : Delete
+         confirm : Delete
+         task    : ?delete&id={@id}
+      field : id
+         readOnly : true
+         hidden : true
+      field : fname
+      field : lname
+      field : gender
+      field : industry
+      field : state
+
+edit_submit
+   type      : form-submit
+   procedure : App_Person1_Update
+   result
+      type : update
+
+delete
+   type      : delete
+   procedure : App_Person1_Delete
