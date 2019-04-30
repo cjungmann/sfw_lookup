@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+make_autoload()
+{
+    echo "\$shared : autoload_page"
+    echo "   navigation"
+    echo "      target"
+    echo "         label : home"
+    echo "         url   : index.htm"
+
+
+    local -a files=( $( ls site | grep Person - ) )
+    local -a fparts
+    local file IFS
+    for file in "${files[@]}"; do
+        IFS='.'
+        fparts=( $file )
+        echo "      target"
+        echo "         label : ${fparts[0]}"
+        echo "         url   : ${file}"
+    done
+}
+
+
+make_autoload > site/autoload.srm
