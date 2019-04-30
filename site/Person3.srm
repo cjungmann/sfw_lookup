@@ -14,7 +14,7 @@ $default-mode   : list
 list
    type          : table
    procedure     : App_Person3_List
-   title         : Person Management
+   title         : Person3 Management
    subtitle      : Lookup Table Downloaded with Each Dialog
    intro         : This version uses by-dialog lookups, where a lookup table \
                    is downloaded every time a dialog is loaded.  This may seem \
