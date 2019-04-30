@@ -1,0 +1,117 @@
+$database       : SFW_Lookup
+$xml-stylesheet : default.xsl
+$default-mode   : list
+
+list
+   type          : table
+   procedure     : App_Person4_List
+   title         : Person4 Management
+   subtitle      : Using REF branch with Merged Data Model for Lookup Data
+   intro         : This version uses a "list" interaction that includes all of the \
+                   lookup data.  In order to access the lookup data, child interactions \
+                   the "type" instruction must be changed to "merge-type" and moved \
+                   into the schema.  The response mode type should then be set to \
+                   "type : merge".  With that done, the named results are available \
+                   to be used for building interactions.  Open the SRM code to look at \
+                   the "industries" field of the "add" and "edit" interactions
+   autoload_tag  : page
+   on_line_click : ?edit&id={!id}
+   button
+      type  : add
+      label : Create Person
+      task  : ?add
+   result : 1
+      schema
+         field : id
+            readOnly : true
+            hidden   : true
+         field : fname
+         field : lname
+         field : gender
+         field : industry
+         field : state
+   result : 2
+      name   : industries
+   result : 3
+      name     : states
+      lookup   : id
+      row-name : state
+
+add
+   type         : merge
+   schema-proc  : App_Person4_Add
+   form-action  : ?add_submit
+   title        : Add Person
+   autoload_tag : dialog
+   schema
+      merge-type : form-new
+      field     : fname
+      field     : lname
+      field     : gender
+         enum : Person:gender
+      field     : industry
+         # NEW INSTRUCTIONS:
+         ref
+            result : industries
+            label  : name
+      field : state
+
+
+add_submit
+   type      : form-submit
+   procedure : App_Person4_Add
+   result : 1
+      type : update
+
+read
+   type      : form-view
+   procedure : App_Person4_Read
+   result : 1
+      schema
+         field : id
+            readOnly : true
+            hidden   : true
+         field : fname
+         field : lname
+         field : gender
+         field : industry
+         field : state
+
+edit
+   type         : merge
+   schema-proc  : App_Person4_Update
+   procedure    : App_Person4_Value
+   title        : Edit Person
+   form-action  : ?edit_submit
+   autoload_tag : dialog
+   schema
+      merge-type   : form-edit
+      button
+         type    : delete
+         label   : Delete
+         confirm : Delete
+         task    : ?delete&id={@id}
+      field : id
+         readOnly : true
+         hidden   : true
+      field : fname
+      field : lname
+      field : gender
+         enum : Person:gender
+      field : industry
+         # NEW INSTRUCTIONS:
+         ref
+            result : industries
+            label  : name
+         
+      field : state
+
+edit_submit
+   type      : form-submit
+   procedure : App_Person4_Update
+   result
+      type : update
+
+delete
+   type      : delete
+   procedure : App_Person4_Delete

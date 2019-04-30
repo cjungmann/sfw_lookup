@@ -1,0 +1,119 @@
+$database       : SFW_Lookup
+$xml-stylesheet : default.xsl
+$default-mode   : list
+
+list
+   type          : table
+   procedure     : App_Person5_List
+   title         : Person5 Management
+   subtitle      : Using SELECTX with Merged Data Model for Lookup Data
+   intro         : This version is setup similarly to Person4 but using a different \
+                   lookup data.  In order to access the lookup data, child interactions \
+                   field type in order to take advantage of options lookup.
+   autoload_tag  : page
+   on_line_click : ?edit&id={!id}
+   button
+      type  : add
+      label : Create Person
+      task  : ?add
+   result : 1
+      schema
+         field : id
+            readOnly : true
+            hidden   : true
+         field : fname
+         field : lname
+         field : gender
+         field : industry
+         field : state
+   result : 2
+      name   : industries
+   result : 3
+      name     : states
+      lookup   : id
+      row-name : state
+
+add
+   type         : merge
+   schema-proc  : App_Person5_Add
+   form-action  : ?add_submit
+   title        : Add Person
+   autoload_tag : dialog
+   schema
+      merge-type : form-new
+      field     : fname
+      field     : lname
+      field     : gender
+         enum : Person:gender
+      field     : industry
+         ref
+            result : industries
+            label  : name
+      field : state
+         # NEW INSTRUCTIONS:
+         type : selectx
+         style : single
+         result : states
+
+
+add_submit
+   type      : form-submit
+   procedure : App_Person5_Add
+   result : 1
+      type : update
+
+read
+   type      : form-view
+   procedure : App_Person5_Read
+   result : 1
+      schema
+         field : id
+            readOnly : true
+            hidden   : true
+         field : fname
+         field : lname
+         field : gender
+         field : industry
+         field : state
+
+edit
+   type         : merge
+   schema-proc  : App_Person5_Update
+   procedure    : App_Person5_Value
+   title        : Edit Person
+   form-action  : ?edit_submit
+   autoload_tag : dialog
+   schema
+      merge-type   : form-edit
+      button
+         type    : delete
+         label   : Delete
+         confirm : Delete
+         task    : ?delete&id={@id}
+      field : id
+         readOnly : true
+         hidden   : true
+      field : fname
+      field : lname
+      field : gender
+         enum : Person:gender
+      field : industry
+         ref
+            result : industries
+            label  : name
+         
+      field : state
+         # NEW INSTRUCTIONS:
+         type : selectx
+         style : single
+         result : states
+
+edit_submit
+   type      : form-submit
+   procedure : App_Person5_Update
+   result
+      type : update
+
+delete
+   type      : delete
+   procedure : App_Person5_Delete
